@@ -1,4 +1,3 @@
-1111111
 import { Loading } from 'notiflix';
 import { fetchImg, limitPage, renderImg } from './requests'
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
@@ -15,7 +14,7 @@ let searchQuery = null;
 let queryFetch = '';
 let pageFetch = '';
 ref.formSearch.addEventListener("submit", onSubmitForm);
-//ref.buttonLoad.addEventListener("click", onClickButton);
+
 //Ініціалізація біблітеки SimpleLightbox
 const simpleBox = new SimpleLightbox('.gallery a', {
     captionsData: 'alt', // отримуємо заголовок
@@ -46,7 +45,7 @@ const firstNumberImg = async (query, pageFetch) => {
         });
         const data = await fetchImg(query, pageFetch);
         Loading.remove();
-        if (!data.hits.length) { //Якщо бекенд повертає порожній масив
+        if (!data.totalHits) { //Якщо бекенд повертає порожній масив
             Notify.failure(
                 "Sorry, there are no images matching your search query. Please try again."
             );
@@ -61,23 +60,29 @@ const firstNumberImg = async (query, pageFetch) => {
             Notify.success(`Hooray! We found ${data.totalHits} images.`);
             obsScroll.observe(ref.target);
         }
+        if (data.totalHits <= pageFetch * limitPage) {
+            Notify.failure(
+                "We're sorry, but you've reached the end of search results." 
+            )
+        }
+
     } catch (error) {
         console.log(error);//помилка
         Notify.failure('Oops! Something went wrong!')
     }
 };
+//функція що відповідає за нескінченне завантаження зображень під час прокручування сторінки 
 function onObsScroll(entries) {
     entries.forEach(entry => {
-        console.log(entry);
+       // console.log(entry);
         if (entry.isIntersecting) {
             pageFetch++;
             fetchImg(searchQuery, pageFetch)
-                .then(({ data: { totalHits, hits } }) => {
-                    renderImg(hits);
-                    ref.divGallery.refresh();
-                    if (pageFetch > totalHits / limitPage) {
+                .then(data => {
+                    renderImg(data);
+                    simpleBox.refresh();
+                    if (pageFetch > data.totalHits / limitPage) {
                         obsScroll.unobserve(ref.target);
-
                     }
                 })
                 .catch(err => Notify.failure(err.message))
