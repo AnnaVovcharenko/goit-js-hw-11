@@ -10,9 +10,8 @@ const ref = {
     target: document.querySelector('.target')
 }
 const gallareDiv = ref.divGallery;
-let searchQuery = null;
 let queryFetch = '';
-let pageFetch = '';
+let pageFetch = 1;
 ref.formSearch.addEventListener("submit", onSubmitForm);
 
 //Ініціалізація біблітеки SimpleLightbox
@@ -29,21 +28,19 @@ function onSubmitForm(e) {
     if (!query.trim() || query === queryFetch) {
         return;
     }
-    queryFetch = query;
-    obsScroll.observe(ref.target);
-    ref.divGallery.innerHTML = '';
-    pageFetch = 1;
+    queryFetch = query;   
+    ref.divGallery.innerHTML = '';  
     firstNumberImg(queryFetch, pageFetch); // додаємо функцію що відповідає за  кількість картинок при першому запиті
     ref.formSearch.reset();
 }
 // Функція що відповідає за  групу картинок при першому запиті (з використанням синтаксу async/await)
 
-const firstNumberImg = async (query, pageFetch) => {
+const firstNumberImg = async (queryFetch, pageFetch) => {
     try {
         Loading.circle('Loading', {
             svgColor: '#9a25be',
         });
-        const data = await fetchImg(query, pageFetch);
+        const data = await fetchImg(queryFetch, pageFetch);
         Loading.remove();
         if (!data.totalHits) { //Якщо бекенд повертає порожній масив
             Notify.failure(
@@ -74,26 +71,35 @@ const firstNumberImg = async (query, pageFetch) => {
 //функція що відповідає за нескінченне завантаження зображень під час прокручування сторінки 
 function onObsScroll(entries) {
     entries.forEach(entry => {
-       // console.log(entry);
+        console.log(entry);
         if (entry.isIntersecting) {
-            pageFetch++;
-            fetchImg(searchQuery, pageFetch)
+            pageFetch += 1;
+            smoothScroll();//добавлена функція прокручування сторінки 
+            fetchImg(queryFetch, pageFetch)
                 .then(data => {
                     renderImg(data);
                     simpleBox.refresh();
                     if (pageFetch > data.totalHits / limitPage) {
                         obsScroll.unobserve(ref.target);
-                    }
+                    }                   
                 })
                 .catch(err => Notify.failure(err.message))
                 .finally(() => Loading.remove());
         }
     });
+    
 }
-
-
-
-
+//функція прокручування сторінки 
+function smoothScroll() {
+    // додане плавне прокручування сторінки на висоту 2х карток галереї (додатково)
+    const { height: cardHeight } = document
+        .querySelector('.gallery')
+        .firstElementChild.getBoundingClientRect();
+    window.scrollBy({
+        top: cardHeight * 2,
+        behavior: 'smooth',
+    });
+}
 
 
 

@@ -51,14 +51,7 @@ function renderImg(data) {
         .join('');
     gallareDiv.insertAdjacentHTML('beforeend', markup);
 
-    // додане плавне прокручування сторінки на висоту 2х карток галереї (додатково)
-    const { height: cardHeight } = document
-        .querySelector('.gallery')
-        .firstElementChild.getBoundingClientRect();
-    window.scrollBy({
-        top: cardHeight * 2,
-        behavior: 'smooth',
-    });
+    
 };
 
 
